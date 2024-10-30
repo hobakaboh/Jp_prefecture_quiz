@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>일본 현과 지방 맞히기 퀴즈</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 20px; background-color: #f7f7f7; }
+        h1 { font-size: 2em; margin-bottom: 20px; }
+        
+        #prefectures-container { display: flex; flex-wrap: wrap; justify-content: center; width: 80%; margin-bottom: 20px; gap: 10px; }
+        
+        .container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            max-width: 1200px;
+            gap: 10px;
+        }
+        .region {
+            width: 180px;
+            min-height: 250px;
+            border: 2px solid #333;
+            padding: 10px;
+            background-color: #ffffff;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: background-color 0.3s ease;
+        }
+        .region h3 { font-size: 1.2em; margin-bottom: 10px; }
+        
+        .draggable { padding: 10px; width: fit-content; border: 1px solid #666; background-color: #f1f1f1; cursor: grab; border-radius: 3px; }
+        .draggable.incorrect { background-color: #f88; }
+        
+        button { padding: 10px 20px; font-size: 1em; margin: 20px 10px; cursor: pointer; border: none; background-color: #333; color: white; border-radius: 5px; transition: background-color 0.3s; }
+        button:hover { background-color: #555; }
+        
+        .result { font-weight: bold; margin-top: 20px; font-size: 1.1em; }
+
+        @media (max-width: 1200px) { .region { width: 150px; } }
+        @media (max-width: 768px) { #prefectures-container, .container { width: 100%; } .region { width: 100%; } }
+    </style>
+</head>
+<body>
+
+    <h1>일본 현과 지방 맞히기 퀴즈</h1>
+    <div class="container" id="prefectures-container">
+        <!-- 각 현 리스트 (드래그 가능) -->
+    </div>
+    
+    <div class="container">
+        <div class="region" id="도호쿠" ondrop="drop(event)" ondragover="allowDrop(event)">
+            <h3>도호쿠</h3>
+        </div>
+        <div class="region" id="간토" ondrop="drop(event)" ondragover="allowDrop(event)">
+            <h3>간토</h3>
+        </div>
+        <div class="region" id="주부" ondrop="drop(event)" ondragover="allowDrop(event)">
+            <h3>주부</h3>
+        </div>
+        <div class="region" id="긴키" ondrop="drop(event)" ondragover="allowDrop(event)">
+            <h3>긴키</h3>
+        </div>
+        <div class="region" id="주고쿠" ondrop="drop(event)" ondragover="allowDrop(event)">
+            <h3>주고쿠</h3>
+        </div>
+        <div class="region" id="시코쿠" ondrop="drop(event)" ondragover="allowDrop(event)">
+            <h3>시코쿠</h3>
+        </div>
+        <div class="region" id="규슈" ondrop="drop(event)" ondragover="allowDrop(event)">
+            <h3>규슈</h3>
+        </div>
+    </div>
+
+    <button onclick="checkAnswers()">완료</button>
+    <button onclick="resetGame()">다시 시작</button>
+    <div class="result" id="result"></div>
+
+    <script>
+        const prefectures = {
+            "도호쿠": ["아오모리", "이와테", "미야기", "아키타", "후쿠시마", "야마가타"],
+            "간토": ["이바라키", "도치기", "군마", "사이타마", "치바", "가나가와"],
+            "주부": ["니가타", "도야마", "이시카와", "후쿠이", "야마나시", "나가노", "기후", "시즈오카", "아이치"],
+            "긴키": ["미에", "시가", "효고", "나라", "와카야마"],
+            "주고쿠": ["돗토리", "시마네", "오카야마", "히로시마", "야마구치"],
+            "시코쿠": ["도쿠시마", "가가와", "에히메", "고치"],
+            "규슈": ["후쿠오카", "사가", "나가사키", "구마모토", "오이타", "미야자키", "가고시마", "오키나와"]
+        };
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function loadPrefectures() {
+            const container = document.getElementById("prefectures-container");
+            container.innerHTML = "";
+
+            const allPrefectures = [];
+            for (const region in prefectures) {
+                prefectures[region].forEach(prefecture => {
+                    allPrefectures.push({ name: prefecture, region });
+                });
+            }
+            shuffle(allPrefectures);
+
+            allPrefectures.forEach(pref => {
+                const item = document.createElement("div");
+                item.innerText = pref.name;
+                item.className = "draggable";
+                item.draggable = true;
+                item.id = `${pref.name}-${pref.region}`;
+                item.ondragstart = drag;
+                container.appendChild(item);
+            });
+        }
+
+        function allowDrop(event) {
+            event.preventDefault();
+        }
+
+        function drag(event) {
+            event.dataTransfer.setData("text", event.target.id);
+        }
+
+        function drop(event) {
+            event.preventDefault();
+            const data = event.dataTransfer.getData("text");
+            const item = document.getElementById(data);
+            event.target.appendChild(item);
+        }
+
+        function checkAnswers() {
+            let correctCount = 0;
+            const totalPrefectures = Object.values(prefectures).flat().length;
+
+            document.querySelectorAll(".draggable").forEach(item => {
+                item.classList.remove("incorrect");
+            });
+
+            for (const region in prefectures) {
+                const regionContainer = document.getElementById(region);
+                prefectures[region].forEach(prefecture => {
+                    const itemId = `${prefecture}-${region}`;
+                    const item = document.getElementById(itemId);
+
+                    if (item.parentElement.id === region) {
+                        correctCount++;
+                    } else {
+                        item.classList.add("incorrect");
+                    }
+
+                    regionContainer.appendChild(item);
+                });
+            }
+
+            const resultMessage = `정답: ${correctCount}/${totalPrefectures} 개 맞췄습니다.`;
+            document.getElementById("result").innerText = resultMessage;
+        }
+
+        function resetGame() {
+    document.getElementById("result").innerText = ""; 
+    loadPrefectures(); 
+
+    // 각 드롭존에서 드래그 가능한 항목만 제거 (지방 이름은 유지)
+    document.querySelectorAll(".region").forEach(region => {
+        while (region.children.length > 1) { // 첫 번째 자식 요소는 지역 이름이므로 제외
+            region.removeChild(region.lastChild);
+        }
+    });
+}
+
+
+        window.onload = loadPrefectures;
+    </script>
+
+</body>
+</html>
